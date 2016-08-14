@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <!--color of button in different cases-->
+    <color name="btn_normal_text_color">#ff0000ff</color>
+    <color name="btn_pressed_text_color">#ffff0000</color>
+    <color name="btn_edge_color">#ff0000ff</color>
+    <color name="btn_solid_color">#ffffffff</color>
+
+    <!--color of edit_text's edge in different cases-->
+    <color name="edit_normal_edge_color">#000000</color>
+    <color name="edit_focused_edge_color">#ff0000</color>
+    <color name="edit_solid_color">#ffffffff</color>
+
+</resources>

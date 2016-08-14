@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/SYCommComponent.iml" filepath="$PROJECT_DIR$/SYCommComponent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sycommcomponentlib/customuilib.iml" filepath="$PROJECT_DIR$/sycommcomponentlib/customuilib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sycommcomponentlib/sycommcomponentlib.iml" filepath="$PROJECT_DIR$/sycommcomponentlib/sycommcomponentlib.iml" />
+    </modules>
+  </component>
+</project>
