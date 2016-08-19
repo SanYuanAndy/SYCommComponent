@@ -79,11 +79,13 @@ public class ScrollView extends View implements View.OnTouchListener{
 
         left += perWitdh;
         paint.setColor(Color.YELLOW);
-        rect.set(left, top, left + perWitdh, bottom);
+        rect.set(left, top, left + perWitdh*3, bottom);
         canvas.drawRect(rect, paint);
+        int b = canvas.getWidth();
     }
 
     private int mChunkCount = 5;
+    private int mCacheChunkCount = 3;
     private float oldPotionX = 0;
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -113,7 +115,7 @@ public class ScrollView extends View implements View.OnTouchListener{
     private int currY = 0;
     private void scrollBySafety(int x, int y, boolean bRestore){
         int newX = currX - x;
-        if (newX >= -1 * getWidth()/mChunkCount * 2 && newX <= getWidth()/mChunkCount * 2) {
+        if (newX >= -1 * getWidth()/mChunkCount * mCacheChunkCount && newX <= getWidth()/mChunkCount * mCacheChunkCount) {
             scrollBy(-x, y);
             currX = newX;
         }
