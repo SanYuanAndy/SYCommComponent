@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -48,8 +49,13 @@ public class SelfView extends View implements View.OnTouchListener{
         Log.d(TAG, strMeasureInfo);
         mEntityFadingX = nWidth/15;
         mEntityFadingY = nWidth/12;
-        mEntityWidth = (nWidth - 5*mEntityFadingX)/4;
-        mEntityHeight = (nHeight - 5*mEntityFadingY)/4;
+        if (nWidth > nHeight){
+            mRowCnt = mLineCnt*nWidth/nHeight;
+        }else{
+            mLineCnt = mRowCnt * nHeight/nWidth;
+        }
+        mEntityWidth = (nWidth - (mRowCnt + 1)*mEntityFadingX)/mRowCnt;
+        mEntityHeight = mEntityWidth;
         mEntityHeight = mEntityWidth > mEntityHeight ? mEntityHeight : mEntityWidth;
         onMeasureEntity(bgEntities);
         onMeasureEntity(realEntities);
@@ -79,8 +85,8 @@ public class SelfView extends View implements View.OnTouchListener{
     public void addEntity(AppInfoUtil.AppInfo appInfo){
         for(int i = 0; i < realEntities.length; ++i){
             Entity entity = realEntities[i];
-            int line = i / 4;
-            int row = i % 4;
+            int line = i / mRowCnt;
+            int row = i % mRowCnt;
             if (entity == null){
                 entity = new Entity(this);
                 entity.i = row;
@@ -95,8 +101,8 @@ public class SelfView extends View implements View.OnTouchListener{
     private void onMeasureEntity(Entity[] oEntities){
         for(int i = 0; i < oEntities.length; ++i){
             Entity entity = oEntities[i];
-            int line = i / 4;
-            int row = i % 4;
+            int line = i / mRowCnt;
+            int row = i % mRowCnt;
             if (entity != null){
                 entity.x = mEntityFadingX + (mEntityFadingX + mEntityWidth)*row;
                 entity.y = mEntityFadingY + (mEntityFadingY + mEntityHeight)*line;
@@ -110,8 +116,8 @@ public class SelfView extends View implements View.OnTouchListener{
     private void initBgEntity(){
         for(int i = 0; i < bgEntities.length; ++i){
             bgEntities[i] = new Entity(this, true);
-            int line = i / 4;
-            int row = i % 4;
+            int line = i / mRowCnt;
+            int row = i % mRowCnt;
             bgEntities[i].i = row;
             bgEntities[i].j = line;
         }
@@ -121,8 +127,8 @@ public class SelfView extends View implements View.OnTouchListener{
     private void drawEntity(Canvas canvas, Entity[] oEntities){
         for(int i = 0; i < oEntities.length; ++i){
             Entity entity = oEntities[i];
-            int line = i / 4;
-            int row = i % 4;
+            int line = i / mRowCnt;
+            int row = i % mRowCnt;
             if (entity != null){
                 entity.draw(canvas);
             }
@@ -150,10 +156,10 @@ public class SelfView extends View implements View.OnTouchListener{
         j = (entity.y - mEntityFadingY)/(mEntityFadingY + mEntityHeight);
         Log.d(TAG, " i , j " + i + " , " + j);
         int[] e = new int[4];
-        e[0] = i + j*4;
+        e[0] = i + j*mRowCnt;
         e[1] = e[0] + 1;
-        e[2] = e[0] + 4;
-        e[3] = e[0] + 5;
+        e[2] = e[0] + mRowCnt;
+        e[3] = e[0] + mRowCnt + 1;
         Entity minEntity = null;
         int centerX = entity.x + entity.w/2;
         int centerY = entity.y + entity.h/2;
@@ -247,8 +253,9 @@ public class SelfView extends View implements View.OnTouchListener{
 
 
 
-    private final int ROW = 4;
-    private final int LOW = 4;
+    private final int DEFAULT_ROW_CNT = 4;
+    private int mRowCnt = DEFAULT_ROW_CNT;
+    private int mLineCnt = DEFAULT_ROW_CNT;
     private int mEntityFadingX = 0;
     private int mEntityFadingY = 0;
     private int mEntityWidth = 0;
@@ -283,9 +290,10 @@ public class SelfView extends View implements View.OnTouchListener{
         }
 
         public void draw(Canvas canvas){
+            int alpha = 0xbb;
             Paint paint = new Paint();
             paint.setColor(Color.RED);
-            paint.setStyle(Paint.Style.STROKE);
+            paint.setStyle(Paint.Style.FILL);
             paint.setStrokeWidth(3);
             String strLayoutInfo = String.format("left = %d, top = %d, right = %d, bottom = %d", x, y, w, h);
             //Log.d(TAG, strLayoutInfo);
@@ -299,16 +307,16 @@ public class SelfView extends View implements View.OnTouchListener{
             if (mPressed){
                 paint.setStrokeWidth(5);
                 paint.setColor(Color.BLUE);
+                //paint.setColor(0x77ff0000);
+                paint.setAlpha(alpha);
             }
             RectF rectF = new RectF(x - w0, y - w0, x + w + w0, y + h + w0);
-            //canvas.drawRect(x, y, x + w, y + h, paint);
             canvas.drawRoundRect(rectF, 30, 30, paint);
             paint.setTextSize(60);
             paint.setTextAlign(Paint.Align.CENTER);
             Paint.FontMetricsInt fontMetrics = paint.getFontMetricsInt();
             int x0 = x + w/2;
             int y0 = y + h/2 - (fontMetrics.bottom + fontMetrics.top)/2;
-            //canvas.drawText("" + id, x0, y0, paint);
             if (appInfo != null){
                 paint.setColor(Color.BLACK);
                 paint.setTextSize(25);
@@ -326,20 +334,40 @@ public class SelfView extends View implements View.OnTouchListener{
                 paint.setStyle(Paint.Style.STROKE);
                 Drawable drawable = appInfo.mIconDrawable;
                 Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
-                int bitmapX = 0;
-                int bitmapY = 0;
-                bitmapX = x + w/2 - bitmap.getWidth()/2;
-                bitmapY = y + h/2 - bitmap.getHeight()/2;
-                canvas.drawBitmap(bitmap, bitmapX, bitmapY, paint);
+                /***********
+                //int bitmapX = 0;
+                //int bitmapY = 0;
+                //bitmapX = x + w/2 - bitmap.getWidth()/2;
+                //bitmapY = y + h/2 - bitmap.getHeight()/2;
+                //canvas.drawBitmap(bitmap, bitmapX, bitmapY, paint);
+                /*******
+                //Rect dstRest = new Rect(x, y, x + w, y + h);
+                //Rect srcRest = new Rect(0,0,w, h);
+                //canvas.drawBitmap(bitmap, srcRest, dstRest, paint);
+                ********/
+                /************/
+               if (mPressed){
+                    paint.setAlpha(0x77);
+                }
+                Matrix matrix = new Matrix();
+                float scale = 0.8f;
+                float scaleX = 1.0f*w/bitmap.getWidth()*scale;
+                float scaleY = 1.0f*h/bitmap.getHeight()*scale;
+                float bitmapX = 0;
+                float bitmapY = 0;
+                bitmapX = x + w/2 - scaleX*bitmap.getWidth()/2;
+                bitmapY = y + h/2 - scaleY*bitmap.getHeight()/2;
+                matrix.postScale(scaleX, scaleY);//需要小数点的整形除法，必须先将一个类型转成浮点型
+                matrix.postTranslate(bitmapX, bitmapY);
+                canvas.drawBitmap(bitmap, matrix, paint);
+
                 BitmapShader bitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
                 paint.setShader(bitmapShader);
                 canvas.drawCircle(x + w/2, y + h/2, 40, paint);
-                w0 = 10;
+                paint.setStyle(Paint.Style.FILL);
                 paint.setStrokeWidth(3);
-                rectF = new RectF(x, y, x + 10, y + 10);
-                canvas.drawRect(x + 30, y + 30, x + w - 30, y + h -30, paint);
+                rectF = new RectF(x, y, x + w, y + h);
                 canvas.drawRoundRect(rectF, 30, 30, paint);
-                //bitmap.recycle();
             }
         }
 
@@ -385,7 +413,7 @@ public class SelfView extends View implements View.OnTouchListener{
                 mSelectedEntity = findEntity(mPressedX, mPressedY);
                 if (mSelectedEntity != null) {
                     mSelectedEntity.setLongPressed(true);
-                    realEntities[mSelectedEntity.i + mSelectedEntity.j * 4] = null;
+                    realEntities[mSelectedEntity.i + mSelectedEntity.j * mRowCnt] = null;
                     invalidate(new Rect(mSelectedEntity.x, mSelectedEntity.y, mSelectedEntity.x + mSelectedEntity.w, mSelectedEntity.y + mSelectedEntity.h));
                     //SelfView.this.scrollBy(-15, -15);
                     //SelfView.this.layout(SelfView.this.getLeft() - 10, SelfView.this.getTop() -10, SelfView.this.getRight() - 10, SelfView.this.getBottom() - 10);
@@ -418,12 +446,13 @@ public class SelfView extends View implements View.OnTouchListener{
                 mPressed = false;
                 this.removeCallbacks(check);
                 this.removeCallbacks(steadyCheck);
+                scrollTo(0,0);
                 if (mSelectedEntity != null){
                     Entity emptyEntity = findNearBgEntity(mSelectedEntity, bgEntities);
                     if (emptyEntity != null){
-                        realEntities[emptyEntity.i + emptyEntity.j * 4] = mSelectedEntity;
+                        realEntities[emptyEntity.i + emptyEntity.j * mRowCnt] = mSelectedEntity;
                         mSelectedEntity.move(emptyEntity.x, emptyEntity.y);
-                        //realEntities[mSelectedEntity.i + mSelectedEntity.j * 4] = null;
+                        //realEntities[mSelectedEntity.i + mSelectedEntity.j * mRowCnt] = null;
                         mSelectedEntity.i = emptyEntity.i;
                         mSelectedEntity.j = emptyEntity.j;
                     }else{
@@ -454,10 +483,27 @@ public class SelfView extends View implements View.OnTouchListener{
                 if (tNow - mLastMoveTime < 100){
                     break;
                 }
+                mLastMoveTime = tNow;
+                if (mSelectedEntity == null){
+                    int nCurrScrollX = getScrollX();
+
+                    int lastScorllX = mPressedX - x + nCurrScrollX;
+                    if (lastScorllX < -mEntityWidth) {
+                        lastScorllX = -mEntityWidth - nCurrScrollX;
+                    }else if (lastScorllX > mEntityWidth){
+                        lastScorllX = mEntityWidth - nCurrScrollX;
+                    }else {
+
+                    }
+                    Log.d(TAG, "scrollX " + nCurrScrollX + " last " + lastScorllX);
+                    scrollBy(lastScorllX, 0);
+                    postInvalidate();
+                    break;
+                }
                 this.removeCallbacks(check);
                 this.removeCallbacks(steadyCheck);
                 this.postDelayed(steadyCheck, 200);
-                mLastMoveTime = tNow;
+
                 if (mSelectedEntity != null && mPressed){
                     mSelectedEntity.move(x, y);
                     invalidate(new Rect(mSelectedEntity.x, mSelectedEntity.y, mSelectedEntity.x + mSelectedEntity.w, mSelectedEntity.y + mSelectedEntity.h));
