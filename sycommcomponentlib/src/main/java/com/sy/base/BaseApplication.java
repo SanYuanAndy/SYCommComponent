@@ -1,4 +1,4 @@
-package com.sy.coustomuicomponent;
+package com.sy.base;
 
 import android.app.Application;
 import android.os.Handler;

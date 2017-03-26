@@ -20,7 +20,9 @@
             </intent-filter>
         </activity>
         <activity android:name="com.sy.sycommcomponent.ui.ScrollViewActivity" />
-        <activity android:name="com.sy.sycommcomponent.ui.CircleProgressBarActivity"></activity>
+        <activity android:name="com.sy.sycommcomponent.ui.CircleProgressBarActivity" />
+        <activity android:name="com.sy.sycommcomponent.ui.ContextActivity" />
+        <activity android:name="com.sy.sycommcomponent.ui.SyncActivity" />
     </application>
 
 </manifest>

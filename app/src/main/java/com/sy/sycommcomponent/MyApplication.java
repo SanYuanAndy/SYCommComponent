@@ -1,7 +1,8 @@
 package com.sy.sycommcomponent;
 
-import com.sy.coustomuicomponent.BaseApplication;
+import com.sy.base.BaseApplication;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -56,4 +57,8 @@ public class MyApplication extends BaseApplication {
         public void showMsg(String msg);
     };
 
+    @Override
+    public File getFilesDir(){
+        return new File(getApplicationInfo().dataDir + File.separator + "zsy");
+    }
 }

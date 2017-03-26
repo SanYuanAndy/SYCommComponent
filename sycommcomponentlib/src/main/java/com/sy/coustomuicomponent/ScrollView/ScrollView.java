@@ -27,8 +27,13 @@ import android.view.View;
     *号所围成的区域是可视视图。-号所围成的区域是内存视图。两者重叠的部分是，
  *  用户能够真正能够看到的内存视图的一部分。移动或者改变内存视图，用户就可以
  *  看到内存视图的其他部分或者全部内容。
+ *
+ *  scrollTo是移动View中的显示的内容
+ *  而不是移动View本身的位置。
+ *
  */
 public class ScrollView extends View implements View.OnTouchListener{
+    private final static String TAG = ScrollView.class.getSimpleName();
     public ScrollView(Context context){
         super(context);
     }
@@ -40,19 +45,25 @@ public class ScrollView extends View implements View.OnTouchListener{
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Log.d("", "widthMeasureSpec " + widthMeasureSpec);
-        Log.d("", "heightMeasureSpec " + heightMeasureSpec);
-        Log.d("", "width " + getWidth());
-        Log.d("", "height " + getHeight());
-        //super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(1080 + 360*2, 360);
+        Log.d(TAG, "widthMeasureSpec = " + MeasureSpec.getSize(widthMeasureSpec));
+        Log.d(TAG, "heightMeasureSpec = " + MeasureSpec.getSize(heightMeasureSpec));
+        Log.d(TAG, "width = " + getWidth());
+        Log.d(TAG, "height = " + getHeight());
+        this.setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), 200);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        Log.d(TAG,"canvas.getMaxWidth():" + canvas.getMaximumBitmapWidth());
+        Log.d(TAG,"canvas.getMaxHeight():" + canvas.getMaximumBitmapHeight());
+        Log.d(TAG,"canvas.getWidth():" + canvas.getWidth());
+        Log.d(TAG,"canvas.getHeight():" + canvas.getHeight());
         super.onDraw(canvas);
         Paint paint = new Paint();
         Rect rect = new Rect();
+        rect.set(getLeft(), getTop(), getRight(), getBottom());
+        Log.d(TAG, rect.toString());
+
         int perWitdh = getWidth()/mChunkCount;
         int top = getTop();
         int bottom = getBottom();
@@ -60,28 +71,41 @@ public class ScrollView extends View implements View.OnTouchListener{
 
         paint.setColor(Color.RED);
         rect.set(left, top, left + perWitdh, bottom);
+        Log.d(TAG, rect.toString());
         canvas.drawRect(rect, paint);
 
         left += perWitdh;
         paint.setColor(Color.BLUE);
         rect.set(left, top, left + perWitdh, bottom);
+        Log.d(TAG, rect.toString());
         canvas.drawRect(rect, paint);
+
 
         left += perWitdh;
         paint.setColor(Color.BLACK);
         rect.set(left, top, left + perWitdh, bottom);
+        Log.d(TAG, rect.toString());
         canvas.drawRect(rect, paint);
 
         left += perWitdh;
         paint.setColor(Color.GRAY);
         rect.set(left, top, left + perWitdh, bottom);
+        Log.d(TAG, rect.toString());
         canvas.drawRect(rect, paint);
 
         left += perWitdh;
         paint.setColor(Color.YELLOW);
         rect.set(left, top, left + perWitdh*3, bottom);
+        Log.d(TAG, rect.toString());
         canvas.drawRect(rect, paint);
-        int b = canvas.getWidth();
+
+        Log.d(TAG,"canvas.getWidth():" + canvas.getWidth());
+        Log.d(TAG,"canvas.getHeight():" + canvas.getHeight());
+
+        paint.setColor(Color.GRAY);
+        rect.set(left, top, left + perWitdh, bottom*3);
+        Log.d(TAG, rect.toString());
+        canvas.drawRect(rect, paint);
     }
 
     private int mChunkCount = 5;
@@ -94,18 +118,18 @@ public class ScrollView extends View implements View.OnTouchListener{
                 int moveStep = (int) (motionEvent.getX() - oldPotionX);
                 scrollBySafety(moveStep, 0, true);
             }
-                break;
+            break;
             case MotionEvent.ACTION_DOWN: {
                 oldPotionX = motionEvent.getX();
             }
-                break;
+            break;
             case MotionEvent.ACTION_MOVE: {
                 float currPotionX = motionEvent.getX();
                 int moveStep = (int) (currPotionX - oldPotionX);
                 scrollBySafety(moveStep, 0, false);
                 oldPotionX = currPotionX;
             }
-                break;
+            break;
             default:
         }
         return true;

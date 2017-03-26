@@ -9,6 +9,7 @@
         android:id="@+id/item_sv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"/>
+        android:layout_alignParentTop="true"
+        android:layout_margin="40px"/>
 
 </RelativeLayout>
