@@ -8,10 +8,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+
         android:theme="@style/AppTheme">
         <activity
             android:name="com.sy.sycommcomponent.ui.MainActivity"
             android:label="@string/title_activity_main"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,10 +21,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.sy.sycommcomponent.ui.ScrollViewActivity" />
-        <activity android:name="com.sy.sycommcomponent.ui.CircleProgressBarActivity" />
-        <activity android:name="com.sy.sycommcomponent.ui.ContextActivity" />
-        <activity android:name="com.sy.sycommcomponent.ui.SyncActivity" />
+        <activity android:name="com.sy.sycommcomponent.ui.ScrollViewActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.sy.sycommcomponent.ui.CircleProgressBarActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.sy.sycommcomponent.ui.ContextActivity" android:screenOrientation="portrait"/>
+        <activity android:name="com.sy.sycommcomponent.ui.SyncActivity" android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

@@ -20,6 +20,7 @@ import android.view.View;
 
 import com.sy.utils.AppInfoUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -150,8 +151,6 @@ public class SelfView extends View implements View.OnTouchListener{
 
     private Entity findNearBgEntity(Entity entity, Entity[] oEntities){
        int i = 0, j = 0;
-        //int x = mEntityFading + (mEntityFading + mEntityWidth)*i;
-        //int y = mEntityFading + (mEntityFading + mEntityHeight)*j;
         i = (entity.x - mEntityFadingX)/(mEntityFadingX + mEntityWidth);
         j = (entity.y - mEntityFadingY)/(mEntityFadingY + mEntityHeight);
         Log.d(TAG, " i , j " + i + " , " + j);
@@ -273,6 +272,8 @@ public class SelfView extends View implements View.OnTouchListener{
         int y;
         int i;
         int j;
+        int pressX;
+        int pressY;
         AppInfoUtil.AppInfo appInfo;
         private View mParent = null;
         public Entity(View view){
@@ -295,8 +296,6 @@ public class SelfView extends View implements View.OnTouchListener{
             paint.setColor(Color.RED);
             paint.setStyle(Paint.Style.FILL);
             paint.setStrokeWidth(3);
-            String strLayoutInfo = String.format("left = %d, top = %d, right = %d, bottom = %d", x, y, w, h);
-            //Log.d(TAG, strLayoutInfo);
             int w0 = 0;
             if (bg){
                 w0 = 15;
@@ -307,22 +306,18 @@ public class SelfView extends View implements View.OnTouchListener{
             if (mPressed){
                 paint.setStrokeWidth(5);
                 paint.setColor(Color.BLUE);
-                //paint.setColor(0x77ff0000);
                 paint.setAlpha(alpha);
             }
             RectF rectF = new RectF(x - w0, y - w0, x + w + w0, y + h + w0);
             canvas.drawRoundRect(rectF, 30, 30, paint);
-            paint.setTextSize(60);
-            paint.setTextAlign(Paint.Align.CENTER);
-            Paint.FontMetricsInt fontMetrics = paint.getFontMetricsInt();
-            int x0 = x + w/2;
-            int y0 = y + h/2 - (fontMetrics.bottom + fontMetrics.top)/2;
+
             if (appInfo != null){
+                paint.setTextAlign(Paint.Align.CENTER);
                 paint.setColor(Color.BLACK);
                 paint.setTextSize(25);
                 paint.setStrokeWidth(1);
                 paint.setStyle(Paint.Style.FILL);
-                fontMetrics = paint.getFontMetricsInt();
+                Paint.FontMetricsInt fontMetrics = paint.getFontMetricsInt();
                 int labelX = x + w/2;
                 int labelY = y + h + ((SelfView)mParent).mEntityFadingY/4 - (fontMetrics.bottom + fontMetrics.top)/2;
                 String strLabel = appInfo.mLabel;
@@ -347,8 +342,9 @@ public class SelfView extends View implements View.OnTouchListener{
                 ********/
                 /************/
                if (mPressed){
-                    paint.setAlpha(0x77);
+                    paint.setAlpha(0x77);//后面不可再设置画笔的颜色，因为设置颜色的时候会覆盖透明度
                 }
+                /*********居中绘制图标*********/
                 Matrix matrix = new Matrix();
                 float scale = 0.8f;
                 float scaleX = 1.0f*w/bitmap.getWidth()*scale;
@@ -360,6 +356,7 @@ public class SelfView extends View implements View.OnTouchListener{
                 matrix.postScale(scaleX, scaleY);//需要小数点的整形除法，必须先将一个类型转成浮点型
                 matrix.postTranslate(bitmapX, bitmapY);
                 canvas.drawBitmap(bitmap, matrix, paint);
+                /*********居中绘制图标*********/
 
                 BitmapShader bitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
                 paint.setShader(bitmapShader);
@@ -405,6 +402,7 @@ public class SelfView extends View implements View.OnTouchListener{
         }
     }
 
+    //长按事件检测
     private Runnable check = new Runnable() {
         @Override
         public void run() {
@@ -413,22 +411,23 @@ public class SelfView extends View implements View.OnTouchListener{
                 mSelectedEntity = findEntity(mPressedX, mPressedY);
                 if (mSelectedEntity != null) {
                     mSelectedEntity.setLongPressed(true);
+                    mSelectedEntity.pressX = mPressedX - mSelectedEntity.x;
+                    mSelectedEntity.pressY = mPressedY - mSelectedEntity.y;
                     realEntities[mSelectedEntity.i + mSelectedEntity.j * mRowCnt] = null;
+                    /****局部更新，避免无必要的重绘***/
                     invalidate(new Rect(mSelectedEntity.x, mSelectedEntity.y, mSelectedEntity.x + mSelectedEntity.w, mSelectedEntity.y + mSelectedEntity.h));
-                    //SelfView.this.scrollBy(-15, -15);
-                    //SelfView.this.layout(SelfView.this.getLeft() - 10, SelfView.this.getTop() -10, SelfView.this.getRight() - 10, SelfView.this.getBottom() - 10);
                 }
             }
         }
     };
 
+    //移动过程中，停留事件检测
     private Runnable steadyCheck = new Runnable() {
         @Override
         public void run() {
             if (mPressed && mSelectedEntity != null){
                 Log.d(TAG, "long wait");
                 Entity emptyEntity = findNearBgEntity(mSelectedEntity, bgEntities);
-                //invalidate(new Rect(mSelectedEntity.x, mSelectedEntity.y, mSelectedEntity.x + mSelectedEntity.w, mSelectedEntity.y + mSelectedEntity.h));
             }
         }
     };
@@ -436,6 +435,8 @@ public class SelfView extends View implements View.OnTouchListener{
     private boolean mPressed = false;
     private int mPressedX = 0;
     private int mPressedY = 0;
+    private int mLastMoveX = 0;
+    private int mLastMoveY = 0;
     private Entity mSelectedEntity = null;
     private long mLastMoveTime = SystemClock.elapsedRealtime();
     @Override
@@ -452,13 +453,11 @@ public class SelfView extends View implements View.OnTouchListener{
                     if (emptyEntity != null){
                         realEntities[emptyEntity.i + emptyEntity.j * mRowCnt] = mSelectedEntity;
                         mSelectedEntity.move(emptyEntity.x, emptyEntity.y);
-                        //realEntities[mSelectedEntity.i + mSelectedEntity.j * mRowCnt] = null;
                         mSelectedEntity.i = emptyEntity.i;
                         mSelectedEntity.j = emptyEntity.j;
                     }else{
                         mSelectedEntity.x = mEntityFadingX + (mEntityFadingX + mEntityWidth)*mSelectedEntity.i;
                         mSelectedEntity.y = mEntityFadingY + (mEntityFadingY + mEntityHeight)*mSelectedEntity.j;
-                        //mSelectedEntity.move(emptyEntity.x, emptyEntity.y);
                     }
 
                     mSelectedEntity.setLongPressed(false);
@@ -473,6 +472,8 @@ public class SelfView extends View implements View.OnTouchListener{
                 this.postDelayed(check, 500);
                 mPressedX = (int)motionEvent.getX();//获取的是view的左上方顶点的相对位置。即使view被scroll过，基准不变
                 mPressedY = (int)motionEvent.getY();
+                mLastMoveX = mPressedX;
+                mLastMoveY = mPressedY;
 
             }
             break;
@@ -480,6 +481,7 @@ public class SelfView extends View implements View.OnTouchListener{
                 int x = (int)motionEvent.getX();
                 int y = (int)motionEvent.getY();
                 long tNow = SystemClock.elapsedRealtime();
+                /***移动时间间隔过短，没必要重绘，避免高CPU占用***/
                 if (tNow - mLastMoveTime < 100){
                     break;
                 }
@@ -505,9 +507,32 @@ public class SelfView extends View implements View.OnTouchListener{
                 this.postDelayed(steadyCheck, 200);
 
                 if (mSelectedEntity != null && mPressed){
-                    mSelectedEntity.move(x, y);
-                    invalidate(new Rect(mSelectedEntity.x, mSelectedEntity.y, mSelectedEntity.x + mSelectedEntity.w, mSelectedEntity.y + mSelectedEntity.h));
+                    mSelectedEntity.move(mSelectedEntity.x + x - mLastMoveX, mSelectedEntity.y + y - mLastMoveY);
+                    /****局部更新，避免无必要的重绘***/
+                    int freshTop = mSelectedEntity.y;
+                    int freshLeft = mSelectedEntity.x;
+                    int freshBottom = mSelectedEntity.y + mSelectedEntity.h + 30;//加上文本的高度
+                    int freshRight = mSelectedEntity.x + mSelectedEntity.w;
+                    int x0 = x - mLastMoveX;
+                    int y0 =  y - mLastMoveY;
+                    if (x0 > 0){
+                        freshLeft -= x0;
+                    }else if(x0 < 0){
+                        freshRight -= x0;
+                    }
+
+                    if (y0 > 0){
+                        freshTop -= y0;
+                    }else if(y0 < 0){
+                        freshBottom -= y0;
+                    }
+                    Rect freshRect = new Rect(freshLeft, freshTop, freshRight, freshBottom);
+                    invalidate(freshRect);
+                    /****局部更新，避免无必要的重绘***/
                 }
+                mLastMoveX = x;
+                mLastMoveY = y;
+
             }
             break;
             default:
