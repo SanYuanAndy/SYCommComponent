@@ -21,7 +21,7 @@ public class SyncActivity extends Activity {
         setContentView(R.layout.activity_self_view);
         mAppList = AppInfoUtil.getAppInfoList_ext(MyApplication.getAppliction());
         SelfView view = (SelfView)findViewById(R.id.self_sv);
-        for (int i = 0; i < 16 && i < mAppList.size(); ++i) {
+        for (int i = 0; i < 16*4 && i < mAppList.size(); ++i) {
             Log.d("", " i = " + i + "size = " + mAppList.size());
             if (i == 15){
                 mAppList.get(i).mIconDrawable = this.getResources().getDrawable(R.drawable.dd);

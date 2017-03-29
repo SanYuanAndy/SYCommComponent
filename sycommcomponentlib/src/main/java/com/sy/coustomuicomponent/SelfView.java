@@ -72,6 +72,20 @@ public class SelfView extends View implements View.OnTouchListener{
         if (mSelectedEntity != null){
             mSelectedEntity.draw(canvas);
         }
+
+        Paint paint = new Paint();
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(30);
+        paint.setStrokeWidth(2);
+        paint.setStyle(Paint.Style.FILL);
+        Paint.FontMetricsInt fontMetrics = paint.getFontMetricsInt();
+        int labelHeight = 60;
+        int labelX = 0 + getWidth()/2 + getScrollX();
+        int labelY = getHeight() - 2*labelHeight + labelHeight/2 - (fontMetrics.bottom + fontMetrics.top)/2;
+        String strLabel = String.format("第%d页", mCurrentPage + 1);
+        canvas.drawText(strLabel, labelX, labelY, paint);
+
         super.onDraw(canvas);//实际绘制过程中也是使用的左上方顶点的相对位置。当绘制的内容超出View的大小时，之后scroll view才能显示出来
         //调用scroll后，绘制的基准变了，所以绘制的内容也跟着sroll了。但是，被绘制的内容与View的左上方的顶点的相对位置没有变。
     }
@@ -94,6 +108,7 @@ public class SelfView extends View implements View.OnTouchListener{
                 entity.j = line;
                 entity.appInfo = appInfo;
                 realEntities[i] = entity;
+                mPageCnt = i/mPageSize + 1;
                 return;
             }
         }
@@ -105,8 +120,9 @@ public class SelfView extends View implements View.OnTouchListener{
             int line = i / mRowCnt;
             int row = i % mRowCnt;
             if (entity != null){
-                entity.x = mEntityFadingX + (mEntityFadingX + mEntityWidth)*row;
-                entity.y = mEntityFadingY + (mEntityFadingY + mEntityHeight)*line;
+                int page = i/24;
+                entity.x = mEntityFadingX + (mEntityFadingX + mEntityWidth)*row + page*getWidth();
+                entity.y = mEntityFadingY + (mEntityFadingY + mEntityHeight)*(line - page*6);
                 entity.w = mEntityWidth;
                 entity.h = mEntityHeight;
             }
@@ -136,8 +152,12 @@ public class SelfView extends View implements View.OnTouchListener{
         }
     }
 
+    int mPageSize = 24;
+    int mCurrentPage = 0;
+    int mPageCnt = 0;
     private Entity findEntity(int x, int y){
-        for(int i = 0; i < realEntities.length; ++i){
+        x = x + mCurrentPage*getWidth();
+        for(int i = mCurrentPage*mPageSize; i < mPageSize; ++i){
             Entity entity = realEntities[i];
             if (entity != null){
                 if ((x > entity.x && x <entity.x + entity.w)
@@ -151,8 +171,8 @@ public class SelfView extends View implements View.OnTouchListener{
 
     private Entity findNearBgEntity(Entity entity, Entity[] oEntities){
        int i = 0, j = 0;
-        i = (entity.x - mEntityFadingX)/(mEntityFadingX + mEntityWidth);
-        j = (entity.y - mEntityFadingY)/(mEntityFadingY + mEntityHeight);
+        i = (entity.x - mEntityFadingX - getWidth()*mCurrentPage)/(mEntityFadingX + mEntityWidth);
+        j = (entity.y - mEntityFadingY)/(mEntityFadingY + mEntityHeight) + mCurrentPage*mPageSize/mRowCnt;
         Log.d(TAG, " i , j " + i + " , " + j);
         int[] e = new int[4];
         e[0] = i + j*mRowCnt;
@@ -178,10 +198,10 @@ public class SelfView extends View implements View.OnTouchListener{
             }
 
         }
-        //四周没有可用的空间
+        //四周没有可用的空间,尝试挤出空间来
         if (minEntity == null){
             int z = e[3] + 1;
-            for(; z < realEntities.length; ++z){
+            for(; z < realEntities.length && z < (mCurrentPage + 1)*mPageSize; ++z){
                 if (realEntities[z] == null){
                     for(int w = z; w > e[3]; w--){
                         realEntities[w] = realEntities[w - 1];
@@ -197,7 +217,14 @@ public class SelfView extends View implements View.OnTouchListener{
                 }
             }
         }
-
+        //挤不出空间来,从前面找出第一个空间
+        for (int k = (mCurrentPage)*mPageSize; k < oEntities.length && k < (mCurrentPage + 1)*mPageSize; ++k){
+            if (realEntities[k] == null){
+                minEntity = oEntities[k];
+                break;
+            }
+        }
+        Log.d(TAG, "i, j" + minEntity.i + " " + minEntity.j);
         return minEntity;
     }
 
@@ -260,8 +287,8 @@ public class SelfView extends View implements View.OnTouchListener{
     private int mEntityWidth = 0;
     private int mEntityHeight = 0;
 
-    public Entity[] realEntities = new Entity[28];
-    public Entity[] bgEntities = new Entity[28];
+    public Entity[] realEntities = new Entity[28*4];
+    public Entity[] bgEntities = new Entity[28*4];
     public static class Entity{
         private static int COUNT = 0;
         private int id = ++COUNT;
@@ -322,7 +349,7 @@ public class SelfView extends View implements View.OnTouchListener{
                 int labelY = y + h + ((SelfView)mParent).mEntityFadingY/4 - (fontMetrics.bottom + fontMetrics.top)/2;
                 String strLabel = appInfo.mLabel;
                 if (strLabel.length() > 6){
-                    strLabel = strLabel.substring(0, 6) + "...";
+                    strLabel = strLabel.substring(0, 4) + "...";
                 }
                 canvas.drawText(strLabel, labelX, labelY, paint);
 
@@ -463,6 +490,19 @@ public class SelfView extends View implements View.OnTouchListener{
                     mSelectedEntity.setLongPressed(false);
                     mSelectedEntity = null;
                     invalidate();
+                }else{
+                    int x = (int)motionEvent.getX();
+                    if (mPressedX - x > mEntityFadingX*3){
+                        if (mCurrentPage < mPageCnt - 1) {
+                            mCurrentPage++;
+                        }
+                    }else if (x - mPressedX > mEntityFadingX*3){
+                        if (mCurrentPage > 0) {
+                            mCurrentPage--;
+                        }
+                    }
+                    scrollTo(mCurrentPage * getWidth(), 0);
+                    postInvalidate();
                 }
             }
             break;
@@ -488,24 +528,26 @@ public class SelfView extends View implements View.OnTouchListener{
                 mLastMoveTime = tNow;
                 if (mSelectedEntity == null){
                     int nCurrScrollX = getScrollX();
-
-                    int lastScorllX = mPressedX - x + nCurrScrollX;
+                    int scrollStepX = 0;
+                    int lastScorllX = mLastMoveX - x + nCurrScrollX;
                     if (lastScorllX < -mEntityWidth) {
-                        lastScorllX = -mEntityWidth - nCurrScrollX;
-                    }else if (lastScorllX > mEntityWidth){
-                        lastScorllX = mEntityWidth - nCurrScrollX;
+                        scrollStepX = -mEntityWidth - nCurrScrollX;
+                    }else if (lastScorllX > (mPageCnt - 1)*getWidth() + mEntityWidth){
+                        scrollStepX = (mPageCnt - 1)*getWidth() + mEntityWidth - nCurrScrollX;
                     }else {
+                        scrollStepX = mLastMoveX - x;
 
                     }
-                    Log.d(TAG, "scrollX " + nCurrScrollX + " last " + lastScorllX);
-                    scrollBy(lastScorllX, 0);
+                    Log.d(TAG, "scrollX " + nCurrScrollX + " last " + lastScorllX + " mPageCnt " + mPageCnt + " mCurrPage " + mCurrentPage);
+                    this.scrollBy(scrollStepX, 0);
+                    mLastMoveX = x;
+                    mLastMoveY = y;
                     postInvalidate();
                     break;
                 }
                 this.removeCallbacks(check);
                 this.removeCallbacks(steadyCheck);
                 this.postDelayed(steadyCheck, 200);
-
                 if (mSelectedEntity != null && mPressed){
                     mSelectedEntity.move(mSelectedEntity.x + x - mLastMoveX, mSelectedEntity.y + y - mLastMoveY);
                     /****局部更新，避免无必要的重绘***/
