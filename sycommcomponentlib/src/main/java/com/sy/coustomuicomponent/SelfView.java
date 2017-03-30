@@ -157,7 +157,8 @@ public class SelfView extends View implements View.OnTouchListener{
     int mPageCnt = 0;
     private Entity findEntity(int x, int y){
         x = x + mCurrentPage*getWidth();
-        for(int i = mCurrentPage*mPageSize; i < mPageSize; ++i){
+        Log.d(TAG, "x, y " + x + "," + y);
+        for(int i = mCurrentPage*mPageSize; i <mCurrentPage*mPageSize + mPageSize; ++i){
             Entity entity = realEntities[i];
             if (entity != null){
                 if ((x > entity.x && x <entity.x + entity.w)
@@ -207,8 +208,8 @@ public class SelfView extends View implements View.OnTouchListener{
                         realEntities[w] = realEntities[w - 1];
                         realEntities[w].i = oEntities[w].i;
                         realEntities[w].j = oEntities[w].j;
-                        int x = mEntityFadingX + (mEntityFadingX + mEntityWidth)* realEntities[w].i;
-                        int y = mEntityFadingY + (mEntityFadingY + mEntityHeight)* realEntities[w].j;
+                        int x = mEntityFadingX + (mEntityFadingX + mEntityWidth)* realEntities[w].i + mCurrentPage*getWidth();
+                        int y = mEntityFadingY + (mEntityFadingY + mEntityHeight)* (realEntities[w].j - mCurrentPage*6);
                         realEntities[w].move(x, y, 500);
                         realEntities[w - 1] = null;
                     }
@@ -218,13 +219,15 @@ public class SelfView extends View implements View.OnTouchListener{
             }
         }
         //挤不出空间来,从前面找出第一个空间
-        for (int k = (mCurrentPage)*mPageSize; k < oEntities.length && k < (mCurrentPage + 1)*mPageSize; ++k){
-            if (realEntities[k] == null){
-                minEntity = oEntities[k];
-                break;
+        if (minEntity == null) {
+            for (int k = (mCurrentPage) * mPageSize; k < oEntities.length && k < (mCurrentPage + 1) * mPageSize; ++k) {
+                if (realEntities[k] == null) {
+                    minEntity = oEntities[k];
+                    break;
+                }
             }
         }
-        Log.d(TAG, "i, j" + minEntity.i + " " + minEntity.j);
+        Log.d(TAG, "i, j " + minEntity.i + " " + minEntity.j);
         return minEntity;
     }
 
@@ -474,7 +477,7 @@ public class SelfView extends View implements View.OnTouchListener{
                 mPressed = false;
                 this.removeCallbacks(check);
                 this.removeCallbacks(steadyCheck);
-                scrollTo(0,0);
+                scrollTo(mCurrentPage*getWidth(),0);
                 if (mSelectedEntity != null){
                     Entity emptyEntity = findNearBgEntity(mSelectedEntity, bgEntities);
                     if (emptyEntity != null){
